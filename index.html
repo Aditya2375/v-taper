@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>V-TAPER — A Training Log</title>
+<meta name="description" content="A ten-week V-taper training log. Sessions, records, and progress - kept on paper rules, run by a machine.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>V</text></svg>">
+</head>
+<body>
+<div class="grain" aria-hidden="true"></div>
+
+<header class="masthead">
+  <div class="masthead-inner">
+    <div class="wordmark">
+      <span class="wordmark-v">V</span><span class="wordmark-rest">-TAPER</span>
+    </div>
+    <p class="masthead-sub">A training log, kept properly</p>
+    <div class="masthead-meta">
+      <span id="today-line">—</span>
+      <span class="dot">·</span>
+      <span id="week-line">—</span>
+    </div>
+  </div>
+  <nav class="tabs" id="tabs" role="tablist">
+    <button class="tab is-active" data-view="today" role="tab">Today</button>
+    <button class="tab" data-view="program" role="tab">Program</button>
+    <button class="tab" data-view="log" role="tab">Logbook</button>
+    <button class="tab" data-view="progress" role="tab">Progress</button>
+    <button class="tab" data-view="records" role="tab">Records</button>
+  </nav>
+</header>
+
+<main id="app" class="app"><!-- views render here --></main>
+
+<footer class="colophon">
+  <p>Built for one lifter and his ten weeks. Your data never leaves this browser.</p>
+  <button class="linklike" id="data-menu-btn">Data &amp; settings</button>
+</footer>
+
+<div class="overlay" id="timer-overlay" hidden>
+  <div class="timer-card">
+    <p class="kicker">Rest</p>
+    <div class="timer-face" id="timer-face">1:30</div>
+    <div class="timer-presets" id="timer-presets"></div>
+    <div class="timer-actions">
+      <button class="btn ghost" id="timer-skip">Skip</button>
+      <button class="btn" id="timer-close">Back to work</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="data-overlay" hidden>
+  <div class="sheet">
+    <div class="sheet-head">
+      <h2>Data &amp; settings</h2>
+      <button class="linklike" id="data-close">Close</button>
+    </div>
+    <div class="sheet-body" id="data-sheet-body"></div>
+  </div>
+</div>
+
+<script src="program.js"></script>
+<script src="seed.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
