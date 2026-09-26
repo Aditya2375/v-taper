@@ -126,7 +126,7 @@ function renderToday() {
 
   app.innerHTML = `<div class="view">${sample}
     <div class="session-banner">
-      <h2 class="session-name">${esc(day.name.replace(/(\w+)$/, "<em>$1</em>"))}</h2>
+      <h2 class="session-name">${esc(day.name).replace(/(\w+)$/, "<em>$1</em>")}</h2>
       <div class="session-facts">
         <b>${esc(day.dow)}</b> · ${esc(day.focus)}<br>
         Week <b>${weekNumber()}</b> of ${getProgram().weeks} · <b>${day.exercises.length}</b> movements
@@ -169,6 +169,7 @@ function renderToday() {
     </div>
     <div class="session-bar">
       <span class="session-progress"><b>${doneSets}</b> of <b>${totalSets}</b> sets logged</span>
+      <button class="chip" id="rest-chip" hidden>Rest</button>
       <button class="btn ghost small" id="add-set">+ Add a set</button>
       <button class="btn" id="finish-session" ${doneSets === 0 ? "disabled" : ""}>Log the session</button>
     </div>
@@ -209,6 +210,7 @@ function renderToday() {
     renderToday();
   });
   $("#finish-session").addEventListener("click", finishSession);
+  $("#rest-chip").addEventListener("click", () => { if (!$("#timer-overlay").hidden) return; startTimer(getProgram().days[dayIndex(isoToday())].exercises.find(e => e.rest)?.rest || 90); });
   bindSampleWipe();
 }
 
@@ -227,10 +229,27 @@ function previousSet(exName, setIdx) {
   const s = prev.sets[setIdx];
   return (s.weight || 0) + "×" + (s.reps || 0);
 }
+let restChipInt = null;
 function maybeStartRest() {
   const day = getProgram().days[dayIndex(isoToday())];
   const plan = day.exercises.find(e => e.rest);
-  if (plan) startTimer(plan.rest);
+  if (!plan) return;
+  startRestChip(plan.rest);
+}
+function startRestChip(seconds) {
+  clearInterval(restChipInt);
+  let left = seconds;
+  const chip = $("#rest-chip");
+  if (!chip) return;
+  chip.hidden = false;
+  const tick = () => {
+    const m = Math.floor(left / 60), s = left % 60;
+    chip.textContent = "Rest " + m + ":" + String(s).padStart(2, "0");
+    if (left <= 0) { clearInterval(restChipInt); chip.textContent = "Go."; beep(); setTimeout(() => { chip.hidden = true; }, 1500); return; }
+    left--;
+  };
+  tick();
+  restChipInt = setInterval(tick, 1000);
 }
 function finishSession() {
   draft.exercises = draft.exercises.filter(ex => ex.sets.some(s => s.done));
