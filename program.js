@@ -1,8 +1,10 @@
-/* The ten-week V-taper program.
-   Seeded from the plan structure Aditya shared (5-day split,
-   Upper A / Lower A / Upper B / Lower B / Delts+Arms, Monday rest).
-   Every exercise, set and rep target is editable in-app later;
-   targets here follow the shared plan's pattern for a 57 kg beginner. */
+/* The ten-week V-taper program — TEMPLATE.
+   Only the split structure is known from Aditya's shared plan
+   (10 weeks, 5-day split, Tue Upper A through Sat Delts, Mon+Sun rest).
+   The actual plan files could not be retrieved, so the exercises and
+   targets below are a sensible V-taper template for a 57 kg beginner,
+   NOT his prescribed plan. He can replace them with the real list from
+   his master-workout-plan1.pdf. */
 
 const PROGRAM = {
   name: "The V-Taper Ten",

@@ -279,6 +279,9 @@ function renderProgram() {
   $("#app").innerHTML = `<div class="view">
     <div class="section-head"><span class="section-num">02</span><h2 class="section-title">The program</h2>
       <span class="section-note">${prog.name} · ${prog.weeks} weeks</span></div>
+    <div class="sample-banner"><span class="tag">Template</span>
+      The split matches your plan's shape (Upper A / Lower A / Upper B / Lower B / Delts &amp; Arms). The exact exercise list is a stand-in — swap in the movements from your master plan PDF and it becomes the real thing.
+    </div>
     <div class="week-grid">
       ${prog.days.map((d, i) => `
         <div class="day-cell ${d.rest ? "rest" : ""} ${i === todayDi ? "today" : ""}" data-day="${i}">
