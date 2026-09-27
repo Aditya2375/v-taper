@@ -76,7 +76,10 @@ function postBw(date, kg) {
 
 function updateDataLabel() {
   const el = document.getElementById("data-label");
-  if (el) el.textContent = remoteOk ? "shared demo log · live" : "offline · built-in seed";
+  if (el) {
+    el.textContent = remoteOk ? "Shared log · live" : "Offline · built-in seed";
+    el.classList.toggle("live", remoteOk);
+  }
 }
 
 const $ = (sel, el = document) => el.querySelector(sel);

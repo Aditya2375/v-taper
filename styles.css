@@ -441,6 +441,8 @@ body {
 }
 .colophon p { font-family: var(--serif); font-style: italic; font-size: 14px; color: var(--ink-3); }
 .colophon .linklike { margin-left: auto; }
+.data-label { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); align-self: center; }
+.data-label.live { color: var(--accent); }
 
 /* ————— empty states ————— */
 .empty {
