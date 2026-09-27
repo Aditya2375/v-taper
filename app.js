@@ -26,6 +26,59 @@ function loadState() {
 }
 function save() { localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
 
+/* ——— shared log backend (Supabase) with the built-in seed as offline fallback ——— */
+const SB_URL = "https://iljapbrjcxhtymtkiuea.supabase.co";
+const SB_KEY = "sb_publishable_bKtD9c5Q0GzMFNOZQ58z8A_WCIxbRt8";
+let remoteOk = false;
+
+async function loadRemote() {
+  try {
+    const [lr, br] = await Promise.all([
+      fetch(SB_URL + "/rest/v1/vtaper_logs?select=*", { headers: { apikey: SB_KEY } }),
+      fetch(SB_URL + "/rest/v1/vtaper_bodyweight?select=*&order=date", { headers: { apikey: SB_KEY } })
+    ]);
+    if (!lr.ok || !br.ok) throw 0;
+    const logs = await lr.json(), bw = await br.json();
+    if (!Array.isArray(logs) || !logs.length) throw 0;
+    const own = state.logs.filter(l => !String(l.id).startsWith("seed-"));
+    const ownDates = new Set(own.map(l => l.date));
+    const remote = logs.filter(l => !ownDates.has(l.date))
+      .map(l => ({ id: l.id, date: l.date, session: l.session, exercises: l.exercises, pr: !!l.pr }));
+    state.logs = [...own, ...remote];
+    if (Array.isArray(bw) && bw.length) {
+      const seedBwDates = new Set(buildSeed().bodyweight.map(b => b.date));
+      const bwDates = new Set(bw.map(b => b.date));
+      state.bodyweight = [...state.bodyweight.filter(b => !seedBwDates.has(b.date) && !bwDates.has(b.date)),
+        ...bw.map(b => ({ date: b.date, kg: Number(b.kg) }))]
+        .sort((a, b) => a.date.localeCompare(b.date));
+    }
+    remoteOk = true;
+  } catch (e) { remoteOk = false; }
+  updateDataLabel();
+  render();
+}
+
+function postLog(log) {
+  return fetch(SB_URL + "/rest/v1/vtaper_logs", {
+    method: "POST",
+    headers: { apikey: SB_KEY, "Content-Type": "application/json", Prefer: "return=minimal" },
+    body: JSON.stringify({ id: log.id, date: log.date, session: log.session, exercises: log.exercises, pr: !!log.pr })
+  });
+}
+
+function postBw(date, kg) {
+  return fetch(SB_URL + "/rest/v1/vtaper_bodyweight", {
+    method: "POST",
+    headers: { apikey: SB_KEY, "Content-Type": "application/json", Prefer: "return=minimal,resolution=ignore-duplicates" },
+    body: JSON.stringify({ date, kg })
+  });
+}
+
+function updateDataLabel() {
+  const el = document.getElementById("data-label");
+  if (el) el.textContent = remoteOk ? "shared demo log · live" : "offline · built-in seed";
+}
+
 const $ = (sel, el = document) => el.querySelector(sel);
 const $$ = (sel, el = document) => [...el.querySelectorAll(sel)];
 const isoToday = () => {
@@ -251,8 +304,14 @@ function finishSession() {
   const oldPRs = allPRs();
   draft.id = "log-" + draft.date;
   const idx = state.logs.findIndex(l => l.date === draft.date);
+  const isNew = idx < 0;
   if (idx >= 0) state.logs[idx] = JSON.parse(JSON.stringify(draft));
   else state.logs.push(JSON.parse(JSON.stringify(draft)));
+  if (isNew && remoteOk) {
+    const posted = JSON.parse(JSON.stringify(state.logs.find(l => l.date === draft.date)));
+    posted.id = posted.id + "-" + Date.now();
+    postLog(posted).catch(() => {});
+  }
   const newPRs = allPRs();
   const hitPR = Object.keys(newPRs).some(k => {
     const n = newPRs[k], o = oldPRs[k];
@@ -465,7 +524,9 @@ function renderProgress() {
     state.bodyweight = state.bodyweight.filter(b => b.date !== today);
     state.bodyweight.push({ date: today, kg });
     state.bodyweight.sort((a, b) => a.date.localeCompare(b.date));
-    save(); renderProgress();
+    save();
+    if (remoteOk) postBw(today, kg).catch(() => {});
+    renderProgress();
   });
   bindChartTips();
   bindSampleWipe();
@@ -615,3 +676,5 @@ document.addEventListener("keydown", e => {
 });
 
 render();
+updateDataLabel();
+loadRemote();
