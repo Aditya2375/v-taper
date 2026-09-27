@@ -58,26 +58,10 @@ async function loadRemote() {
   render();
 }
 
-function postLog(log) {
-  return fetch(SB_URL + "/rest/v1/vtaper_logs", {
-    method: "POST",
-    headers: { apikey: SB_KEY, "Content-Type": "application/json", Prefer: "return=minimal" },
-    body: JSON.stringify({ id: log.id, date: log.date, session: log.session, exercises: log.exercises, pr: !!log.pr })
-  });
-}
-
-function postBw(date, kg) {
-  return fetch(SB_URL + "/rest/v1/vtaper_bodyweight", {
-    method: "POST",
-    headers: { apikey: SB_KEY, "Content-Type": "application/json", Prefer: "return=minimal,resolution=ignore-duplicates" },
-    body: JSON.stringify({ date, kg })
-  });
-}
-
 function updateDataLabel() {
   const el = document.getElementById("data-label");
   if (el) {
-    el.textContent = remoteOk ? "Shared log · live" : "Offline · built-in seed";
+    el.textContent = remoteOk ? "Demo log · live" : "Offline · demo seed";
     el.classList.toggle("live", remoteOk);
   }
 }
@@ -307,14 +291,8 @@ function finishSession() {
   const oldPRs = allPRs();
   draft.id = "log-" + draft.date;
   const idx = state.logs.findIndex(l => l.date === draft.date);
-  const isNew = idx < 0;
   if (idx >= 0) state.logs[idx] = JSON.parse(JSON.stringify(draft));
   else state.logs.push(JSON.parse(JSON.stringify(draft)));
-  if (isNew && remoteOk) {
-    const posted = JSON.parse(JSON.stringify(state.logs.find(l => l.date === draft.date)));
-    posted.id = posted.id + "-" + Date.now();
-    postLog(posted).catch(() => {});
-  }
   const newPRs = allPRs();
   const hitPR = Object.keys(newPRs).some(k => {
     const n = newPRs[k], o = oldPRs[k];
@@ -528,7 +506,6 @@ function renderProgress() {
     state.bodyweight.push({ date: today, kg });
     state.bodyweight.sort((a, b) => a.date.localeCompare(b.date));
     save();
-    if (remoteOk) postBw(today, kg).catch(() => {});
     renderProgress();
   });
   bindChartTips();
