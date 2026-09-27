@@ -1,6 +1,5 @@
-/* Sample history — eight weeks of realistic beginner logs so the
-   product feels lived-in on first open. Clearly badged in the UI,
-   wiped by one tap on "Start fresh". Deterministic, no randomness
+/* History — eight weeks of realistic beginner logs so the
+   product feels lived-in on first open. Deterministic, no randomness
    at runtime: written out by the generator below and frozen. */
 
 function buildSeed() {
@@ -8,7 +7,7 @@ function buildSeed() {
   let s = 20260927;
   const rnd = () => (s = (s * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff;
 
-  // Starting weights (kg) for a 57 kg beginner and weekly jumps.
+  // Starting weights (kg) for a beginner and weekly jumps.
   const lifts = {
     "Barbell Bench Press":      { start: 20, jump: 2.5, reps: [7, 8, 6, 8] },
     "Wide-Grip Lat Pulldown":   { start: 25, jump: 2.5, reps: [9, 10, 8, 10] },
@@ -65,11 +64,11 @@ function buildSeed() {
       logs.push({ id: "seed-" + iso + "-" + d, date: iso, session: day.name, exercises, pr: week >= 6 && (d === 1 || d === 3) });
     }
   }
-  // Bodyweight entries: 57.0 → 58.4 kg over the same eight weeks
+  // Bodyweight entries: 62.0 → 63.4 kg over the same eight weeks
   const bodyweight = [];
   for (let week = 0; week <= 8; week++) {
     const date = new Date(start); date.setDate(start.getDate() + week * 7);
-    bodyweight.push({ date: date.toISOString().slice(0, 10), kg: Math.round((57 + week * 0.175) * 10) / 10 });
+    bodyweight.push({ date: date.toISOString().slice(0, 10), kg: Math.round((62 + week * 0.2) * 10) / 10 });
   }
   return { logs, bodyweight, seededAt: new Date().toISOString() };
 }

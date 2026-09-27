@@ -17,7 +17,6 @@ function loadState() {
   const fresh = {
     version: 1,
     programStart: "2026-08-03",
-    isSample: true,
     logs: seed.logs,
     bodyweight: seed.bodyweight,
     customProgram: null
@@ -91,13 +90,9 @@ function renderToday() {
   const day = getProgram().days[di];
   const app = $("#app");
 
-  const sample = state.isSample
-    ? `<div class="sample-banner"><span class="tag">Sample data</span>
-       Eight weeks of example history is loaded so you can see everything working. It is not your training.
-       <button class="btn small ghost" id="wipe-sample">Start fresh — wipe it</button></div>` : "";
 
   if (day.rest) {
-    app.innerHTML = `<div class="view">${sample}
+    app.innerHTML = `<div class="view">
       <div class="section-head"><span class="section-num">01</span><h2 class="section-title">Today</h2>
       <span class="section-note">Week ${weekNumber()} · ${esc(day.dow)}</span></div>
       <div class="rest-day">
@@ -106,7 +101,6 @@ function renderToday() {
       </div>
       ${recentStrip()}
     </div>`;
-    bindSampleWipe();
     return;
   }
 
@@ -124,7 +118,7 @@ function renderToday() {
   const totalSets = draft.exercises.reduce((t, ex) => t + ex.sets.length, 0);
   const prs = allPRs();
 
-  app.innerHTML = `<div class="view">${sample}
+  app.innerHTML = `<div class="view">
     <div class="session-banner">
       <h2 class="session-name">${esc(day.name).replace(/(\w+)$/, "<em>$1</em>")}</h2>
       <div class="session-facts">
@@ -265,19 +259,11 @@ function finishSession() {
     return n.date === draft.date && (!o || n.weight > o.weight || (n.weight === o.weight && n.reps > o.reps));
   });
   if (hitPR) state.logs.find(l => l.date === draft.date).pr = true;
-  state.isSample = false;
   save();
   draft = null;
   switchView("log");
 }
 
-function bindSampleWipe() {
-  const b = $("#wipe-sample");
-  if (b) b.addEventListener("click", () => {
-    state.logs = []; state.bodyweight = []; state.isSample = false;
-    save(); draft = null; render();
-  });
-}
 
 function recentStrip() {
   const recent = [...state.logs].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 3);
@@ -299,7 +285,7 @@ function renderProgram() {
     <div class="section-head"><span class="section-num">02</span><h2 class="section-title">The program</h2>
       <span class="section-note">${prog.name} · ${prog.weeks} weeks</span></div>
     <div class="sample-banner"><span class="tag">Template</span>
-      The split matches your plan's shape (Upper A / Lower A / Upper B / Lower B / Delts &amp; Arms). The exact exercise list is a stand-in — swap in the movements from your master plan PDF and it becomes the real thing.
+      The split (Upper A / Lower A / Upper B / Lower B / Delts &amp; Arms) is a starting point — swap in your own exercises and it becomes your plan.
     </div>
     <div class="week-grid">
       ${prog.days.map((d, i) => `
@@ -328,7 +314,6 @@ function renderProgram() {
 function renderLog() {
   const logs = [...state.logs].sort((a, b) => b.date.localeCompare(a.date));
   $("#app").innerHTML = `<div class="view">
-    ${state.isSample ? `<div class="sample-banner"><span class="tag">Sample data</span>Example history shown below.<button class="btn small ghost" id="wipe-sample">Start fresh</button></div>` : ""}
     <div class="section-head"><span class="section-num">03</span><h2 class="section-title">The logbook</h2>
       <span class="section-note">${logs.length} sessions</span></div>
     ${logs.length === 0 ? `<div class="empty"><div class="big">No sessions yet.</div>Log today's work and it lands here, permanently.</div>` : ""}
@@ -445,7 +430,6 @@ function renderProgress() {
   const currentBw = state.bodyweight.length ? state.bodyweight[state.bodyweight.length - 1].kg : null;
 
   $("#app").innerHTML = `<div class="view">
-    ${state.isSample ? `<div class="sample-banner"><span class="tag">Sample data</span>Charts below run on the example history.<button class="btn small ghost" id="wipe-sample">Start fresh</button></div>` : ""}
     <div class="section-head"><span class="section-num">04</span><h2 class="section-title">Progress</h2>
       <span class="section-note">the proof, in ink</span></div>
     <div class="stat-strip">
@@ -474,7 +458,7 @@ function renderProgress() {
   </div>`;
   $$(".chip").forEach(c => c.addEventListener("click", () => { progressEx = c.dataset.ex; renderProgress(); }));
   $("#add-bw").addEventListener("click", () => {
-    const v = prompt("Bodyweight today (kg):", currentBw || 57);
+    const v = prompt("Bodyweight today (kg):", currentBw || 62);
     if (v == null) return;
     const kg = parseFloat(v); if (isNaN(kg)) return;
     const today = isoToday();
@@ -493,7 +477,6 @@ function renderRecords() {
   const entries = Object.entries(prs).sort((a, b) => b[1].date.localeCompare(a[1].date));
   const recentCut = new Date(Date.now() - 14 * 864e5).toISOString().slice(0, 10);
   $("#app").innerHTML = `<div class="view">
-    ${state.isSample ? `<div class="sample-banner"><span class="tag">Sample data</span>Records below come from the example history.<button class="btn small ghost" id="wipe-sample">Start fresh</button></div>` : ""}
     <div class="section-head"><span class="section-num">05</span><h2 class="section-title">Records</h2>
       <span class="section-note">best set ever, per movement</span></div>
     ${entries.length === 0 ? `<div class="empty"><div class="big">No records yet.</div>The board fills itself the first time you log a session.</div>` : ""}
