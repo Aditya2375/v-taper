@@ -2,6 +2,8 @@
 
 A ten-week V-taper training log. Sessions, records, and progress — kept on paper rules, run by a machine.
 
+Live: https://aditya2375.github.io/v-taper/
+
 ## What it is
 
 - **Today** — the day's session with one-tap set logging, previous-session ghosts, and a built-in rest timer.
