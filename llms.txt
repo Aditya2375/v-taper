@@ -1,0 +1,2 @@
+# V-Taper
+A local-first training log and ten-week exercise template. Sample history is illustrative. Not medical advice. Browser-only data; export JSON backups for portability. No shared workout API.
