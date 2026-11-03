@@ -1,0 +1,6 @@
+[extend]
+useDefault = true
+[[allowlists]]
+description = "Historical Supabase publishable browser key, not a secret; retired loader"
+regexTarget = "secret"
+regexes = ['''sb_publishable_bKtD9c5Q0GzMFNOZQ58z8A_WCIxbRt8''']
