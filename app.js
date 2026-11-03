@@ -453,17 +453,17 @@ function renderProgress() {
       <div style="margin-top:14px"><button class="btn small ghost" id="add-bw">Log today's weight</button></div>
     </div>
   </div>`;
-  $$(".chip").forEach(c => c.addEventListener("click", () => { progressEx = c.dataset.ex; renderProgress(); }));
+  $$(".chip").forEach(c => c.addEventListener("click", () => { progressEx = c.dataset.ex; render(); }));
   $("#add-bw").addEventListener("click", () => {
     const v = prompt("Bodyweight today (kg):", currentBw || 62);
     if (v == null) return;
-    const kg = parseFloat(v); if (isNaN(kg)) return;
+    const kg = Number(v); if (!Number.isFinite(kg) || kg < 1 || kg > 700) { alert("Enter a weight between 1 and 700 kg."); return; }
     const today = isoToday();
     state.bodyweight = state.bodyweight.filter(b => b.date !== today);
     state.bodyweight.push({ date: today, kg });
     state.bodyweight.sort((a, b) => a.date.localeCompare(b.date));
     save();
-    renderProgress();
+    render();
   });
   bindChartTips();
 }
