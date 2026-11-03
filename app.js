@@ -13,7 +13,7 @@ function loadState() {
   try {
     const raw = localStorage.getItem(STORE_KEY);
     if (raw) return validateState(JSON.parse(raw));
-  } catch (e) { queueMicrotask(() => { storageNotice = 'Saved data could not be read. It has not been overwritten. Export a backup from your browser before importing a repair.'; updateDataLabel(); }); }
+  } catch (e) { queueMicrotask(() => { storageNotice = 'Saved data could not be read. Original browser storage is untouched; sample history is shown temporarily. Import a valid backup to repair it. New saves will replace the unreadable data.'; updateDataLabel(); }); }
   const seed = buildSeed();
   return { version: 1, programStart: '2026-08-03', logs: seed.logs, bodyweight: seed.bodyweight, customProgram: null };
 }
