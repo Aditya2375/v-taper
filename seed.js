@@ -47,7 +47,7 @@ function buildSeed() {
       if ((week === 3 && d === 4) || (week === 5 && d === 2)) continue;
       const date = new Date(start);
       date.setDate(start.getDate() + week * 7 + d);
-      const iso = date.toISOString().slice(0, 10);
+      const iso = date.getFullYear() + "-" + String(date.getMonth()+1).padStart(2,"0") + "-" + String(date.getDate()).padStart(2,"0");
       const exercises = day.exercises.map(ex => {
         const L = lifts[ex.name];
         // stall weeks 5-6 on pressing, resume after
@@ -68,7 +68,7 @@ function buildSeed() {
   const bodyweight = [];
   for (let week = 0; week <= 8; week++) {
     const date = new Date(start); date.setDate(start.getDate() + week * 7);
-    bodyweight.push({ date: date.toISOString().slice(0, 10), kg: Math.round((62 + week * 0.2) * 10) / 10 });
+    bodyweight.push({ date: date.getFullYear() + "-" + String(date.getMonth()+1).padStart(2,"0") + "-" + String(date.getDate()).padStart(2,"0"), kg: Math.round((62 + week * 0.2) * 10) / 10 });
   }
   return { logs, bodyweight, seededAt: new Date().toISOString() };
 }
