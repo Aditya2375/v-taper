@@ -8,62 +8,22 @@ let programDayIdx = (new Date().getDay() + 6) % 7; // Mon=0
 let progressEx = "Barbell Bench Press";
 let draft = null; // in-progress session edits, keyed by date
 
+let storageNotice = '';
 function loadState() {
   try {
     const raw = localStorage.getItem(STORE_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch (e) { /* corrupted storage falls through to fresh seed */ }
+    if (raw) return validateState(JSON.parse(raw));
+  } catch (e) { queueMicrotask(() => { storageNotice = 'Saved data could not be read. It has not been overwritten. Export a backup from your browser before importing a repair.'; updateDataLabel(); }); }
   const seed = buildSeed();
-  const fresh = {
-    version: 1,
-    programStart: "2026-08-03",
-    logs: seed.logs,
-    bodyweight: seed.bodyweight,
-    customProgram: null
-  };
-  localStorage.setItem(STORE_KEY, JSON.stringify(fresh));
-  return fresh;
+  return { version: 1, programStart: '2026-08-03', logs: seed.logs, bodyweight: seed.bodyweight, customProgram: null };
 }
-function save() { localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
-
-/* ——— shared log backend (Supabase) with the built-in seed as offline fallback ——— */
-const SB_URL = "https://iljapbrjcxhtymtkiuea.supabase.co";
-const SB_KEY = "sb_publishable_bKtD9c5Q0GzMFNOZQ58z8A_WCIxbRt8";
-let remoteOk = false;
-
-async function loadRemote() {
-  try {
-    const [lr, br] = await Promise.all([
-      fetch(SB_URL + "/rest/v1/vtaper_logs?select=*", { headers: { apikey: SB_KEY } }),
-      fetch(SB_URL + "/rest/v1/vtaper_bodyweight?select=*&order=date", { headers: { apikey: SB_KEY } })
-    ]);
-    if (!lr.ok || !br.ok) throw 0;
-    const logs = await lr.json(), bw = await br.json();
-    if (!Array.isArray(logs) || !logs.length) throw 0;
-    const own = state.logs.filter(l => !String(l.id).startsWith("seed-"));
-    const ownDates = new Set(own.map(l => l.date));
-    const remote = logs.filter(l => !ownDates.has(l.date))
-      .map(l => ({ id: l.id, date: l.date, session: l.session, exercises: l.exercises, pr: !!l.pr }));
-    state.logs = [...own, ...remote];
-    if (Array.isArray(bw) && bw.length) {
-      const seedBwDates = new Set(buildSeed().bodyweight.map(b => b.date));
-      const bwDates = new Set(bw.map(b => b.date));
-      state.bodyweight = [...state.bodyweight.filter(b => !seedBwDates.has(b.date) && !bwDates.has(b.date)),
-        ...bw.map(b => ({ date: b.date, kg: Number(b.kg) }))]
-        .sort((a, b) => a.date.localeCompare(b.date));
-    }
-    remoteOk = true;
-  } catch (e) { remoteOk = false; }
-  updateDataLabel();
-  render();
+function save() {
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(validateState(state))); storageNotice = ''; return true; }
+  catch (e) { storageNotice = 'Changes are in memory only. Browser storage is unavailable or full. Export JSON now to keep them.'; updateDataLabel(); return false; }
 }
-
 function updateDataLabel() {
-  const el = document.getElementById("data-label");
-  if (el) {
-    el.textContent = remoteOk ? "Demo log · live" : "Offline · demo seed";
-    el.classList.toggle("live", remoteOk);
-  }
+  const el = document.getElementById('data-label');
+  if (el) el.textContent = storageNotice || (state.logs.some(l => l.id.startsWith('seed-')) ? 'Local only · includes sample history' : 'Local only · your log');
 }
 
 const $ = (sel, el = document) => el.querySelector(sel);
@@ -97,7 +57,7 @@ function sessionVolume(log) {
     t + ex.sets.reduce((s, st) => s + (st.done ? Math.max(st.weight, 0) * st.reps : 0), 0), 0);
 }
 function allPRs() {
-  const prs = {}; // name -> {weight, reps, date}
+  const prs = Object.create(null); // names are untrusted map keys
   [...state.logs].sort((a, b) => a.date.localeCompare(b.date)).forEach(log => {
     log.exercises.forEach(ex => {
       ex.sets.forEach(st => {
@@ -213,8 +173,8 @@ function renderToday() {
   $$(".set-input").forEach(inp => {
     inp.addEventListener("change", () => {
       const ex = draft.exercises[+inp.dataset.ex], st = ex.sets[+inp.dataset.set];
-      const v = inp.value === "" ? null : parseFloat(inp.value);
-      st[inp.dataset.field] = isNaN(v) ? null : v;
+      const v = inp.value === "" ? null : Number(inp.value);
+      st[inp.dataset.field] = v === null || !Number.isFinite(v) ? null : Math.max(inp.dataset.field === "weight" ? -1000 : 0, Math.min(inp.dataset.field === "weight" ? 2000 : 1000, v));
     });
   });
   $$(".set-check").forEach(btn => {
@@ -240,12 +200,11 @@ function renderToday() {
   $("#add-set").addEventListener("click", () => {
     // add a set to the last exercise
     const last = draft.exercises[draft.exercises.length - 1];
-    last.sets.push({ weight: null, reps: null, done: false });
+    if (last.sets.length < 100) last.sets.push({ weight: null, reps: null, done: false });
     renderToday();
   });
   $("#finish-session").addEventListener("click", finishSession);
   $("#rest-chip").addEventListener("click", () => { if (!$("#timer-overlay").hidden) return; startTimer(getProgram().days[dayIndex(isoToday())].exercises.find(e => e.rest)?.rest || 90); });
-  bindSampleWipe();
 }
 
 function previousExercise(exName) {
@@ -286,8 +245,7 @@ function startRestChip(seconds) {
   restChipInt = setInterval(tick, 1000);
 }
 function finishSession() {
-  draft.exercises = draft.exercises.filter(ex => ex.sets.some(s => s.done));
-  if (!draft.exercises.length) return;
+  if (!draft.exercises.some(ex => ex.sets.some(s => s.done))) return;
   const oldPRs = allPRs();
   draft.id = "log-" + draft.date;
   const idx = state.logs.findIndex(l => l.date === draft.date);
@@ -372,7 +330,6 @@ function renderLog() {
       </div>`).join("")}
   </div>`;
   $$(".log-entry-head").forEach(h => h.addEventListener("click", () => h.parentElement.classList.toggle("open")));
-  bindSampleWipe();
 }
 
 /* ———————————————— charts ———————————————— */
@@ -450,12 +407,12 @@ function renderProgress() {
   }).filter(Boolean);
 
   // weekly volume
-  const weeks = {};
+  const weeks = Object.create(null);
   state.logs.forEach(l => {
     const [y, m, d] = l.date.split("-").map(Number);
     const dt = new Date(y, m - 1, d);
     const monday = new Date(dt); monday.setDate(dt.getDate() - ((dt.getDay() + 6) % 7));
-    const key = monday.toISOString().slice(0, 10);
+    const key = monday.getFullYear() + "-" + String(monday.getMonth()+1).padStart(2,"0") + "-" + String(monday.getDate()).padStart(2,"0");
     weeks[key] = (weeks[key] || 0) + sessionVolume(l);
   });
   const weekKeys = Object.keys(weeks).sort();
@@ -509,7 +466,6 @@ function renderProgress() {
     renderProgress();
   });
   bindChartTips();
-  bindSampleWipe();
 }
 
 /* ———————————————— view: records ———————————————— */
@@ -531,7 +487,6 @@ function renderRecords() {
         </div>`).join("")}
     </div>
   </div>`;
-  bindSampleWipe();
 }
 
 /* ———————————————— rest timer ———————————————— */
@@ -608,36 +563,49 @@ function renderDataSheet() {
     a.href = URL.createObjectURL(blob);
     a.download = "v-taper-" + isoToday() + ".json";
     a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   });
   $("#import-json").addEventListener("click", () => $("#import-file").click());
   $("#import-file").addEventListener("change", e => {
     const f = e.target.files[0]; if (!f) return;
+    if (f.size > 5 * 1024 * 1024) { alert("Import is limited to 5 MB."); return; }
     const r = new FileReader();
     r.onload = () => {
       try {
-        const data = JSON.parse(r.result);
-        if (!data.logs) throw new Error("bad file");
+        const data = validateState(JSON.parse(r.result));
+        if (!confirm("Replace this browser's log with the imported data? Export a backup first if needed.")) return;
         Object.assign(state, data); save(); draft = null;
         $("#data-overlay").hidden = true; render();
       } catch (err) { alert("That file doesn't look like a V-TAPER export."); }
     };
+    r.onerror = () => alert("The file could not be read. Your log is unchanged.");
     r.readAsText(f);
   });
   $("#reset-all").addEventListener("click", () => {
     if (!confirm("Erase all logs, records and history? This cannot be undone.")) return;
-    localStorage.removeItem(STORE_KEY);
-    location.reload();
+    state.logs = []; state.bodyweight = []; state.customProgram = null;
+    state.programStart = isoToday(); draft = null; save();
+    $("#data-overlay").hidden = true; render(); updateDataLabel();
   });
 }
 
 /* ———————————————— router ———————————————— */
 function render() {
+  updateDataLabel();
   renderHeader();
   ({ today: renderToday, program: renderProgram, log: renderLog, progress: renderProgress, records: renderRecords })[view]();
+  if (state.logs.some(l => l.id.startsWith('seed-'))) {
+    const notice = document.createElement('p'); notice.className = 'sample-banner';
+    notice.textContent = 'Sample history included. These are illustrative sessions, not your results. Clear them in Data & settings to start your own log.';
+    $('#app').prepend(notice);
+  }
   $("#app").scrollTo?.(0, 0);
 }
 function switchView(v) {
+  if (!["today", "program", "log", "progress", "records"].includes(v)) return;
+  clearInterval(restChipInt);
   view = v;
+  $$(".tab").forEach(t => t.setAttribute("aria-selected", String(t.dataset.view === v)));
   $$(".tab").forEach(t => t.classList.toggle("is-active", t.dataset.view === v));
   render();
 }
@@ -657,4 +625,3 @@ document.addEventListener("keydown", e => {
 
 render();
 updateDataLabel();
-loadRemote();
