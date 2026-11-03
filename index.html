@@ -4,14 +4,21 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>V-TAPER — A Training Log</title>
+<link rel="canonical" href="https://aditya2375.github.io/v-taper/">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none'">
+<meta property="og:title" content="V-TAPER / A training log">
+<meta property="og:description" content="Local-first sessions, records and progress. No account, no shared workout backend.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://aditya2375.github.io/v-taper/">
+<meta name="twitter:card" content="summary">
 <meta name="description" content="A ten-week V-taper training log. Sessions, records, and progress - kept on paper rules, run by a machine.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="fonts.css">
 <link rel="stylesheet" href="styles.css">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>V</text></svg>">
 </head>
 <body>
+<a class="skip-link" href="#app">Skip to training log</a>
 <div class="grain" aria-hidden="true"></div>
 
 <header class="masthead">
@@ -27,7 +34,7 @@
     </div>
   </div>
   <nav class="tabs" id="tabs" role="tablist">
-    <button class="tab is-active" data-view="today" role="tab">Today</button>
+    <button class="tab is-active" data-view="today" role="tab" aria-selected="true">Today</button>
     <button class="tab" data-view="program" role="tab">Program</button>
     <button class="tab" data-view="log" role="tab">Logbook</button>
     <button class="tab" data-view="progress" role="tab">Progress</button>
@@ -35,11 +42,11 @@
   </nav>
 </header>
 
-<main id="app" class="app"><!-- views render here --></main>
+<main tabindex="-1" id="app" class="app"><!-- views render here --></main>
 
 <footer class="colophon">
-  <p>Built for your ten weeks. Your sessions stay in this browser - the log you see is demo data.</p>
-  <span id="data-label" class="data-label">Offline &middot; demo seed</span>
+  <p>Built for your ten weeks. Training template, not medical advice. Your sessions stay in this browser - sample history is labelled. Export a backup before clearing browser data.</p>
+  <span id="data-label" class="data-label" role="status">Local only &middot; sample history</span>
   <button class="linklike" id="data-menu-btn">Data &amp; settings</button>
 </footer>
 
@@ -67,6 +74,7 @@
 
 <script src="program.js"></script>
 <script src="seed.js"></script>
+<script src="data.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
